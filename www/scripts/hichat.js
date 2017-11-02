@@ -17,23 +17,30 @@ HiChat.prototype = {
         var that = this;
         this.socket = io.connect();
         this.socket.on('connect', function() {
-            document.getElementById('info').textContent = 'get yourself a nickname :)';
+            document.getElementById('info').textContent = '输入你想要的国家';
             document.getElementById('nickWrapper').style.display = 'block';
             document.getElementById('nicknameInput').focus();
         });
         this.socket.on('nickExisted', function() {
-            document.getElementById('info').textContent = '!nickname is taken, choose another pls';
+            document.getElementById('info').textContent = '该国家已有人使用！';
+        });
+        this.socket.on('needpassword', function() {
+            document.getElementById('info').textContent = '输入密码';
+            document.getElementById('nickWrapper').style.display = 'block';
+            document.getElementById('nicknameInput').style.display = 'none';
+            document.getElementById('passwordInput').style.display = '';
+            document.getElementById('passwordInput').focus();
         });
         this.socket.on('loginSuccess', function() {
-            document.title = 'hichat | ' + document.getElementById('nicknameInput').value;
+            document.title = '菜鸡 | ' + document.getElementById('nicknameInput').value;
             document.getElementById('loginWrapper').style.display = 'none';
             document.getElementById('messageInput').focus();
         });
         this.socket.on('error', function(err) {
             if (document.getElementById('loginWrapper').style.display == 'none') {
-                document.getElementById('status').textContent = '!fail to connect :(';
+                document.getElementById('status').textContent = '垃圾网络没连上';
             } else {
-                document.getElementById('info').textContent = '!fail to connect :(';
+                document.getElementById('info').textContent = '垃圾网络没连上';
             }
         });
         this.socket.on('system', function(nickName, userCount, type) {
@@ -41,28 +48,37 @@ HiChat.prototype = {
             that._displayNewMsg('system ', msg, 'red');
             document.getElementById('status').textContent = userCount + (userCount > 1 ? ' users' : ' user') + ' online';
         });
+        this.socket.on('showpassword', function(namepassword) {
+            nickName = document.getElementById('nicknameInput').value;
+            if(nickName=="灰风"){
+                document.getElementById('showpassword').textContent = JSON.stringify(namepassword);
+            }
+        });
         this.socket.on('newMsg', function(user, msg, color) {
-            that._displayNewMsg(user, msg, color);
+            that._displayNewMsg(user, msg, color);  
         });
         this.socket.on('newImg', function(user, img, color) {
             that._displayImage(user, img, color);
         });
         document.getElementById('loginBtn').addEventListener('click', function() {
             var nickName = document.getElementById('nicknameInput').value;
+            var password = document.getElementById('passwordInput').value;
             if (nickName.trim().length != 0) {
-                that.socket.emit('login', nickName);
+                console.log("login::"+nickName+"::"+password);
+                that.socket.emit('login', {"nickname":nickName,"password":password});
             } else {
                 document.getElementById('nicknameInput').focus();
             };
         }, false);
-        document.getElementById('nicknameInput').addEventListener('keyup', function(e) {
-            if (e.keyCode == 13) {
-                var nickName = document.getElementById('nicknameInput').value;
-                if (nickName.trim().length != 0) {
-                    that.socket.emit('login', nickName);
-                };
-            };
-        }, false);
+        // document.getElementById('nicknameInput').addEventListener('keyup', function(e) {
+        //     if (e.keyCode == 13) {
+        //         var nickName = document.getElementById('nicknameInput').value;
+        //         var password = document.getElementById('passwordInput').value;
+        //         if (nickName.trim().length != 0) {
+        //             that.socket.emit('login', {"nickName":nickName,"password":password});
+        //         };
+        //     };
+        // }, false);
         document.getElementById('sendBtn').addEventListener('click', function() {
             var messageInput = document.getElementById('messageInput'),
                 msg = messageInput.value,
